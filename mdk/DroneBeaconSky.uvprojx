@@ -339,7 +339,7 @@
               <MiscControls></MiscControls>
               <Define></Define>
               <Undefine></Undefine>
-              <IncludePath>..\source\mcu\inc;..\source\core</IncludePath>
+              <IncludePath>..\source\core;..\source\mcu\inc;..\source\driver;..\source\midware;..\source\app</IncludePath>
             </VariousControls>
           </Cads>
           <Aads>
@@ -517,6 +517,23 @@
         </Group>
         <Group>
           <GroupName>driver</GroupName>
+          <Files>
+            <File>
+              <FileName>i2c_hal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\source\driver\i2c_hal.c</FilePath>
+            </File>
+            <File>
+              <FileName>spl0601.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\source\driver\spl0601.c</FilePath>
+            </File>
+            <File>
+              <FileName>mcu_hal.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\source\driver\mcu_hal.c</FilePath>
+            </File>
+          </Files>
         </Group>
         <Group>
           <GroupName>midware</GroupName>
