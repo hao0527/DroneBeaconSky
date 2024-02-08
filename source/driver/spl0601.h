@@ -95,7 +95,6 @@
 #define SPL06_COEF_SRCE 0x28
 
 #define SPL06DeviceAdd (0x76 << 1)
-#define I2C_SLAVEADDR SPL06DeviceAdd
 
 /**************************************************************************
  *结构体定义

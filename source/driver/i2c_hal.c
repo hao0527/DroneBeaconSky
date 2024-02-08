@@ -1,6 +1,9 @@
 #include "i2c.h"
 #include "i2c_hal.h"
-#include "spl0601.h"
+
+#define I2C_WAIT_TIMES 10000
+
+static uint8_t i2c_SlaveAddr;
 
 /**
  ******************************************************************************
@@ -15,18 +18,20 @@ en_result_t I2C_Hal_MasterReadData(uint8_t *pu8Data, uint32_t u32Len)
 {
 	en_result_t enRet = Error;
 	uint8_t u8i = 0, u8State;
+	uint32_t waitCnt = 0;
 
 	I2C_SetFunc(I2cStart_En);
-
 	while (1) {
 		while (0 == I2C_GetIrq()) {
+			if(waitCnt++ > I2C_WAIT_TIMES)
+				return enRet;	// 超等待次数
 		}
 		u8State = I2C_GetState();
 		switch (u8State) {
 		case 0x08:
 		case 0x10:
 			I2C_ClearFunc(I2cStart_En);
-			I2C_WriteByte(I2C_SLAVEADDR | 0x01);    // 从机地址发送OK
+			I2C_WriteByte(i2c_SlaveAddr | 0x01);    // 从机地址发送OK
 			break;
 		case 0x40:
 			if (u32Len > 1) {
@@ -44,12 +49,14 @@ en_result_t I2C_Hal_MasterReadData(uint8_t *pu8Data, uint32_t u32Len)
 			I2C_SetFunc(I2cStop_En);
 			break;
 		case 0x38:
-			I2C_SetFunc(I2cStart_En);
-			break;
+			// I2C_SetFunc(I2cStart_En);
+			// break;
+	        return enRet;
 		case 0x48:
 			I2C_SetFunc(I2cStop_En);
-			I2C_SetFunc(I2cStart_En);
-			break;
+			// I2C_SetFunc(I2cStart_En);
+			// break;
+	        return enRet;
 		default:
 			I2C_SetFunc(I2cStart_En);    // 其他错误状态，重新发送起始条件
 			break;
@@ -76,17 +83,20 @@ en_result_t I2C_Hal_MasterWriteData(uint8_t *pu8Data, uint32_t u32Len)
 {
 	en_result_t enRet = Error;
 	uint8_t u8i = 0, u8State;
+	uint32_t waitCnt = 0;
+	
 	I2C_SetFunc(I2cStart_En);
 	while (1) {
 		while (0 == I2C_GetIrq()) {
-			;
+			if(waitCnt++ > I2C_WAIT_TIMES)
+				return enRet;	// 超等待次数
 		}
 		u8State = I2C_GetState();
 		switch (u8State) {
 		case 0x08:
 		case 0x10:
 			I2C_ClearFunc(I2cStart_En);
-			I2C_WriteByte(I2C_SLAVEADDR);    // 从设备地址发送
+			I2C_WriteByte(i2c_SlaveAddr);    // 从设备地址发送
 			break;
 		case 0x18:
 		case 0x28:
@@ -94,12 +104,14 @@ en_result_t I2C_Hal_MasterWriteData(uint8_t *pu8Data, uint32_t u32Len)
 			break;
 		case 0x20:
 		case 0x38:
-			I2C_SetFunc(I2cStart_En);
-			break;
+			// I2C_SetFunc(I2cStart_En);
+			// break;
+	        return enRet;
 		case 0x30:
 			I2C_SetFunc(I2cStop_En);
-			I2C_SetFunc(I2cStart_En);
-			break;
+			// I2C_SetFunc(I2cStart_En);
+			// break;
+	        return enRet;
 		default:
 			break;
 		}
@@ -109,13 +121,12 @@ en_result_t I2C_Hal_MasterWriteData(uint8_t *pu8Data, uint32_t u32Len)
 			break;
 		}
 		I2C_ClearIrq();
-		// delay(10000);
 	}
 	enRet = Ok;
 	return enRet;
 }
 
-void I2C_Hal_Init(void)
+void I2C_Hal_Init(uint8_t slaveAddr)
 {
 	stc_i2c_config_t stcI2cCfg;
 	DDL_ZERO_STRUCT(stcI2cCfg);
@@ -138,8 +149,9 @@ void I2C_Hal_Init(void)
 
 	I2C_SetFunc(I2cHlm_En);
 	I2C_SetFunc(I2cMode_En);
-
     if (stcI2cCfg.bTouchNvic == TRUE) {
 		EnableNvic(I2C_IRQn, 3, TRUE);
 	}
+
+    i2c_SlaveAddr = slaveAddr;
 }

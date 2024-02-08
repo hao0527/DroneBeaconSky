@@ -136,7 +136,7 @@ void SPL06_Init(T_SPL06_calibPara *ptSPL06_calibPara)
 	uint8_t coef[18];
 	uint8_t id;
 
-	I2C_Hal_Init();	// 初始化I2C
+	I2C_Hal_Init(SPL06DeviceAdd);	// 初始化I2C
 
 	id = SPL06ReadRes_Single(SPL06_ID);    // ID 正常情况是0x10
 
