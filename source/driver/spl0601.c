@@ -197,7 +197,7 @@ void SPL06_Init(void)
 	}
 
 	SPL06_SoftReset();
-	delay1ms(100);	// 必须要有
+	delay1ms(100);    // 必须要有
 	SPL06ReadRes_Buf(SPL06_COEF, coef, 18);
 	g_spl06Info.claibPara.C0 = ((int16_t)coef[0] << 4) + ((coef[1] & 0xF0) >> 4);
 	g_spl06Info.claibPara.C0 = (g_spl06Info.claibPara.C0 & 0x0800) ? (0xF000 | g_spl06Info.claibPara.C0) : g_spl06Info.claibPara.C0;
@@ -238,8 +238,11 @@ void SPL06_ReadFIFO(void)
 		return;
 
 	// 循环直到FIFO_EMPTY
-	while(!(SPL06ReadRes_Single(SPL06_FIFO_STS) & 0x1)) {
+	while ((press_cnt + temp_cnt) < 32) {
 		raw_data = SPL06_Get_Pressure_Adc();
+		if (raw_data == 0xFF800000) {
+			break;    // FIFO读空
+		}
 		if (raw_data & 0x1) {
 			// 气压数据
 			raw_press_sum += raw_data;
