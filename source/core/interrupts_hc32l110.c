@@ -396,6 +396,7 @@ void CLKTRIM_IRQHandler(void)
 
 #include "spl0601.h"
 #include "lpuart.h"
+#include "gps.h"
 
 void Gpio_IRQHandler(uint8_t u8Param)
 {
@@ -407,8 +408,6 @@ void Gpio_IRQHandler(uint8_t u8Param)
 	}
 }
 
-uint8_t gpsBuffRMC[100];
-uint8_t gpsBuffGGA[100];
 uint32_t lpUartRxCnt;
 uint8_t lpUartRxStatus; // 0：无需存 1：解析头 2：存RMC 3：存GGA
 uint8_t lpUartRxData[6], lpUartRxDataCnt;
@@ -430,22 +429,32 @@ void My_LpUart_IRQHandler(void)
             lpUartRxData[lpUartRxDataCnt++] = rxData;
             if(lpUartRxDataCnt >= 6) {
                 // 解析头，判断是否要存
-                if (!memcmp(&lpUartRxData[3], "RMC", 3)) {
+                if (!memcmp(&lpUartRxData[3], "RMC", 3) && !g_gpsInfo.RMCBuffer.bufferLocked) {
+                    g_gpsInfo.RMCBuffer.bufferLocked = TRUE;
                     lpUartRxStatus = 2;
-                    memcpy(gpsBuffRMC, lpUartRxData, 6);
-                } else if (!memcmp(&lpUartRxData[3], "GGA", 3)) {
+                    memcpy(g_gpsInfo.RMCBuffer.buffer, lpUartRxData, 6);
+                } else if (!memcmp(&lpUartRxData[3], "GGA", 3) && !g_gpsInfo.GGABuffer.bufferLocked) {
+                    g_gpsInfo.GGABuffer.bufferLocked = TRUE;
                     lpUartRxStatus = 3;
-                    memcpy(gpsBuffGGA, lpUartRxData, 6);
+                    memcpy(g_gpsInfo.GGABuffer.buffer, lpUartRxData, 6);
                 } else {
                     lpUartRxStatus = 0;
                 }
             }
         } else if (lpUartRxStatus == 2) {
-            gpsBuffRMC[lpUartRxDataCnt++] = rxData;
+            g_gpsInfo.RMCBuffer.buffer[lpUartRxDataCnt++] = rxData;
         } else if (lpUartRxStatus == 3) {
-            gpsBuffGGA[lpUartRxDataCnt++] = rxData;
+            g_gpsInfo.GGABuffer.buffer[lpUartRxDataCnt++] = rxData;
         }
-        if(rxData == '\n') {
+        // 结束、超最大Buffer
+        if (rxData == '\n' || lpUartRxDataCnt >= GPS_BUFFER_NUM) {
+            if (lpUartRxStatus == 2) {
+                g_gpsInfo.RMCBuffer.bufferLocked = FALSE;
+                g_gpsInfo.RMCBuffer.rollcnt++;
+            } else if (lpUartRxStatus == 3) {
+                g_gpsInfo.GGABuffer.bufferLocked = FALSE;
+                g_gpsInfo.GGABuffer.rollcnt++;
+            }
             lpUartRxStatus = 0;
         }
     } else {
