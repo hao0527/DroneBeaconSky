@@ -72,6 +72,8 @@ __WEAKDEF void Lvd_IRQHandler(uint8_t u8Param);
 __WEAKDEF void EfRam_IRQHandler(uint8_t u8Param);
 __WEAKDEF void ClkTrim_IRQHandler(uint8_t u8Param);
 
+__WEAKDEF void My_LpUart_IRQHandler(void);
+
 /**
  *******************************************************************************
  ** \brief NVIC 中断使能
@@ -187,7 +189,8 @@ void UART1_IRQHandler(void)
  ******************************************************************************/
 void LPUART_IRQHandler(void)
 {
-    LpUart_IRQHandler(0);
+    // LpUart_IRQHandler(0);
+    My_LpUart_IRQHandler();
 }
 
 /**
@@ -392,6 +395,7 @@ void CLKTRIM_IRQHandler(void)
 ///////////////////////////////我的中断处理函数/////////////////////////////////
 
 #include "spl0601.h"
+#include "lpuart.h"
 
 void Gpio_IRQHandler(uint8_t u8Param)
 {
@@ -401,6 +405,53 @@ void Gpio_IRQHandler(uint8_t u8Param)
         SPL06_ReadFIFO();
 #endif
 	}
+}
+
+uint8_t gpsBuffRMC[100];
+uint8_t gpsBuffGGA[100];
+uint32_t lpUartRxCnt;
+uint8_t lpUartRxStatus; // 0：无需存 1：解析头 2：存RMC 3：存GGA
+uint8_t lpUartRxData[6], lpUartRxDataCnt;
+
+// lpuart中断，只存RMC和GGA报文，丢弃其他的
+void My_LpUart_IRQHandler(void)
+{
+    uint8_t rxData;
+    if(1 == M0P_LPUART->ISR_f.RI) {
+        M0P_LPUART->ICR_f.RICLR = 0;
+        lpUartRxCnt++;
+        rxData = M0P_LPUART->SBUF;
+        if(rxData == '$') {
+            lpUartRxStatus = 1;
+            lpUartRxDataCnt = 0;
+        }
+        if(lpUartRxStatus == 1) {
+            // 存报文头
+            lpUartRxData[lpUartRxDataCnt++] = rxData;
+            if(lpUartRxDataCnt >= 6) {
+                // 解析头，判断是否要存
+                if (!memcmp(&lpUartRxData[3], "RMC", 3)) {
+                    lpUartRxStatus = 2;
+                    memcpy(gpsBuffRMC, lpUartRxData, 6);
+                } else if (!memcmp(&lpUartRxData[3], "GGA", 3)) {
+                    lpUartRxStatus = 3;
+                    memcpy(gpsBuffGGA, lpUartRxData, 6);
+                } else {
+                    lpUartRxStatus = 0;
+                }
+            }
+        } else if (lpUartRxStatus == 2) {
+            gpsBuffRMC[lpUartRxDataCnt++] = rxData;
+        } else if (lpUartRxStatus == 3) {
+            gpsBuffGGA[lpUartRxDataCnt++] = rxData;
+        }
+        if(rxData == '\n') {
+            lpUartRxStatus = 0;
+        }
+    } else {
+        M0P_LPUART->ICR_f.FECLR = 0;
+        M0P_LPUART->ICR_f.TICLR = 0;
+    }
 }
 
 /******************************************************************************/

@@ -12,8 +12,8 @@ void Mcu_Hal_SystemInit(void)
 
 	// CLK初始化，默认RCH 4M
 	stcCfg.enClkSrc = ClkRCH;
-	stcCfg.enHClkDiv = ClkDiv1;
-	stcCfg.enPClkDiv = ClkDiv1;
+	stcCfg.enHClkDiv = ClkDiv8;
+	stcCfg.enPClkDiv = ClkDiv8;
 	Clk_Init(&stcCfg);
 
 	// Clk_SwitchTo(ClkRCL);
@@ -22,6 +22,10 @@ void Mcu_Hal_SystemInit(void)
 
 	// 设置低速时钟为38400
 	Clk_SetRCLFreq(ClkFreq38_4K);
+	// 使能低速时钟给LPUART用
+	Clk_Enable(ClkRCL, TRUE);
+	// Clk_SwitchTo(ClkRCL);
+	// Clk_Enable(ClkRCH, FALSE);
 }
 
 void Mcu_Hal_SPL06_GPIOIntInit(void)
