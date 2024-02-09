@@ -389,6 +389,19 @@ void CLKTRIM_IRQHandler(void)
 }
 
 
+///////////////////////////////我的中断处理函数/////////////////////////////////
+
+#include "spl0601.h"
+
+void Gpio_IRQHandler(uint8_t u8Param)
+{
+	if (u8Param == 3) {
+		Gpio_ClearIrq(3, 3);
+#if SPL06_001_EN_FIFO == 1
+        SPL06_ReadFIFO();
+#endif
+	}
+}
 
 /******************************************************************************/
 /* EOF (not truncated)                                                        */
