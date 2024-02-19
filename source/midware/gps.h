@@ -20,9 +20,11 @@ typedef struct
 
 typedef struct
 {
-	uint32_t utcTime;    // UTC时间
-	uint32_t utcDate;    // UTC日期
-	int8_t status;       // 1:数据有效, 0:数据无效, -1:异常
+	uint32_t utcTime;      // UTC时间（hhmmss）
+	uint32_t utcDate;      // UTC日期（ddmmyy）
+	float groundSpeed;     // 地面速率（000.0~999.9 节）
+	float groundCourse;    // 地面航向（000.0~359.9 度，以真北为参考基准）
+	int8_t status;         // 定位状态（1:数据有效, 0:数据无效, -1:异常）
 } MessageRMC_s;
 
 typedef struct
