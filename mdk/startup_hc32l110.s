@@ -51,7 +51,7 @@
 ; Stack Configuration
 ; Stack Size (in Bytes) <0x0-0xFFFFFFFF:8>
 
-Stack_Size      EQU     0x00000100
+Stack_Size      EQU     0x00000200
 
                 AREA    STACK, NOINIT, READWRITE, ALIGN=3
 Stack_Mem       SPACE   Stack_Size
@@ -61,7 +61,7 @@ __initial_sp
 ; Heap Configuration
 ;  Heap Size (in Bytes) <0x0-0xFFFFFFFF:8>
 
-Heap_Size       EQU     0x00000100
+Heap_Size       EQU     0x00000000
 
                 AREA    HEAP, NOINIT, READWRITE, ALIGN=3
 __heap_base
