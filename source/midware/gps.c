@@ -24,8 +24,8 @@ typedef enum {
 	RMC_NS_INDICATOR,
 	RMC_LONGITUDE,
 	RMC_EW_INDICATOR,
-	RMC_SPEED_OVER_GROUND,
-	RMC_COURSE_OVER,
+	RMC_SPEED_GROUND,
+	RMC_COURSE_GROUND,
 	RMC_UTC_DATE,
 	RMC_NUM_MAX,
 } MessageRMC_e;
@@ -270,6 +270,12 @@ static uint8_t gps_parseRMC(uint8_t *pData)
 				rmcTmp.status = 0;
 			else
 				rmcTmp.status = -1;
+			break;
+		case RMC_SPEED_GROUND:
+			rmcTmp.groundSpeed = str2Float((char *)pData);
+			break;
+		case RMC_COURSE_GROUND:
+			rmcTmp.groundCourse = str2Float((char *)pData);
 			break;
 		case RMC_UTC_DATE:
 			rmcTmp.utcDate = decStr2Int((char *)pData);
